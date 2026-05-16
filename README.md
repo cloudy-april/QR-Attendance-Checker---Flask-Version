@@ -8,7 +8,7 @@
 
 **Built with Flask · Deployed on Azure · Designed for the real world**
 
-🌐 [**Live App**](https://mascan-qr-acexb0a8febaacab.southeastasia-01.azurewebsites.net/) · [YouTube Demo](https://www.youtube.com/watch?v=PLACEHOLDER)
+🌐 [**Live App**](https://mascan-qr-acexb0a8febaacab.southeastasia-01.azurewebsites.net/) · [YouTube Demo](https://www.youtube.com/watch?v=sHimFjR4bxU)
 
 </div>
 
