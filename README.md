@@ -1,210 +1,310 @@
-# MaScan - QR Attendance Checker (Flask)
-## CSEC 3 Cloud Computing - Final Project (Azure Deployment)
+<div align="center">
 
-MaScan is a Flask web app for attendance tracking using QR codes. It supports event-based attendance, QR generation from CSV, scanning, attendance history, and PDF export.
+## 🎯 MaScan
 
-**This project has been deployed to Microsoft Azure as a production-grade cloud application with fault tolerance, autoscaling, and advanced monitoring.**
+### QR Attendance System for Student Organizations
 
----
+*"Where showing up is mandatory, bro."*
 
-## 🎯 Project Submission (CSEC 3 Final Project)
+**Built with Flask · Deployed on Azure · Designed for the real world**
 
-### Team Members
-- **Member 1**: [Name] - Role
-- **Member 2**: [Name] - Role
-- **Member 3**: [Name] - Role
-- **Member 4**: [Name] - Role
+🌐 [**Live App**](https://mascan-qr-acexb0a8febaacab.southeastasia-01.azurewebsites.net/) · [YouTube Demo](https://www.youtube.com/watch?v=PLACEHOLDER)
 
-### Live Demo & Video Presentation
-📹 **[Watch Video Presentation (YouTube Unlisted)](https://www.youtube.com/watch?v=YOUR_VIDEO_ID)**
-
-Video includes:
-- Architecture walkthrough (3 min)
-- Live demo in browser (5 min)
-- Azure Portal walkthrough
-- Cost review & optimization strategies
-- Team Q&A
-
-### Access Live Application
-🌐 **[Click Here to Access Deployed App](http://YOUR_APPLICATION_GATEWAY_IP)**
-
-**Credentials:**
-- Username: `admin`
-- Password: `Admin@123`
-
-### Project Deliverables
-- ✅ **[Architecture Diagram](./diagram/architecture.png)** - Baseline + optimized design
-- ✅ **[Deployment Documentation](./deployment/README.md)** - Step-by-step Azure setup with screenshots
-- ✅ **[Cost Estimate Report](./report/cost-estimate.md)** - Monthly cost analysis & optimization
-- ✅ **[CHANGELOG.md](./CHANGELOG.md)** - Team contribution tracking
-- ✅ **Video Presentation** - YouTube link above
-
-### Azure Services Used (Minimum 3 ✓)
-1. **Azure App Service** - Flask web application (2 instances for redundancy)
-2. **Azure SQL Database** - Production database (replaced SQLite)
-3. **Azure Storage (Blob)** - File uploads & PDF exports
-4. **Application Gateway** - Load balancing
-5. **Azure Application Insights** - Monitoring & telemetry
-
-### Cloud Optimizations Implemented (Minimum 2 ✓)
-1. **Fault Tolerance** - Multi-instance App Service across Availability Zones with health checks
-2. **Scalability** - Autoscale rules (2-5 instances based on CPU > 70%)
-3. **Advanced Monitoring** - Application Insights for performance tracking
-4. **Security** - SQL firewall rules, managed identity, NSG configuration
+</div>
 
 ---
 
-## Features
-- QR scanning for attendance check-in
-- Bulk QR generation from CSV uploads
-- Event management (create, edit, list, view)
-- Attendance history and activity logs
-- User authentication and role-based access
-- PDF export of attendance records
+## 📌 What is MaScan?
 
-## Tech Stack
-- Python, Flask
-- SQLite
-- HTML/CSS/JavaScript
-- OpenCV + pyzbar (QR scanning)
-- ReportLab (PDF export)
+MaScan is a **QR code-based attendance tracking system** built specifically for **student organizations**. It replaces manual attendance sheets with a fast, scannable, and exportable digital workflow.
 
-## Project Structure
-```text
-QR-Attendance-Checker---Flask-Version/
-|-- README.md
-|-- sample_students.csv
-|-- app/
-|   |-- app.py
-|   |-- requirements.txt
-|   |-- src/
-|   |   |-- flask_app.py
-|   |   |-- routes/
-|   |   |-- templates/
-|   |   |-- static/
-|   |   |-- database/
-|   |   |-- utils/
-```
+Whether you're running an org meeting, a campus event, or tracking food distribution, MaScan handles it. Open the scanner on any phone, point it at a QR code, and attendance is recorded instantly.
 
-## Prerequisites
-- Python 3.10+
-- pip
-- Webcam (for live scanning)
+**Key idea:** one admin sets up events and manages the student database. Scanners, volunteers, or officers simply open the web app on their phone and start scanning. No app install required.
 
-## Setup and Run
+---
 
-### 1. Open project root
-```powershell
-git clone https://github.com/thebaynal/QR-Attendance-Checker---Flask-Version.git
-cd QR-Attendance-Checker---Flask-Version
-```
+## ✨ Features
 
-### 2. Create virtual environment
-```powershell
-python -m venv .venv
-```
+### Core Functionality
+| Feature | Description |
+|---------|-------------|
+| 📷 **QR Scanner** | Browser-based camera scanning that works on desktop and mobile, with front/back camera toggle |
+| 📋 **Event Management** | Create events with dates, descriptions, and time-slot categories such as AM, PM, and Food |
+| 👥 **Student Database** | Import students via CSV/XLSX upload or add them manually with auto-generated QR codes |
+| 📊 **Attendance Tracking** | Real-time attendance recording with duplicate detection and audio feedback |
+| 📄 **PDF Export** | One-click attendance reports per event, ready for submission |
+| 🔍 **Search & Filter** | Real-time search across events, students, and QR records |
+| 👤 **User Roles** | Admin and scanner roles with secure login and access control |
 
-### 3. Activate virtual environment
-Windows PowerShell:
-```powershell
-.\.venv\Scripts\Activate.ps1
-```
+### Design & Experience
+| Feature | Description |
+|---------|-------------|
+| 🌗 **Dark Mode** | Full dark theme toggle with persistent preference |
+| 🍞 **Toast Notifications** | Modern slide-in notifications with progress bars and auto-dismiss |
+| 📱 **Responsive Design** | Mobile-first layout that works on phones, tablets, and desktops |
+| ✨ **Animations** | Page transitions, count-up stats, glassmorphism login, and smooth hover effects |
+| 🎨 **Branded UI** | Consistent color system with gradient styling and Poppins + Inter typography |
+| 🚫 **Error Pages** | Custom 404 and 500 pages with navigation back to the app |
+| ⏳ **Loading States** | Spinners on form submission, PDF export, and camera switching |
 
-macOS/Linux:
+---
+
+## 🚀 What's New in V2.0
+
+MaScan V2.0 is a **complete rebuild**. The original V1 was built with [Flet](https://flet.dev/) as a Python desktop UI. V2.0 is a full **Flask web application** that runs in any modern browser.
+
+### Why the rewrite?
+
+The Flet framework could not reliably access mobile cameras through the browser, which defeated the purpose of a QR scanner for org events. Flask plus vanilla JavaScript gave us full control over the camera API, responsive design, and deployment flexibility.
+
+### V1 → V2.0 Changelog
+
+**🔧 Architecture**
+- Flet desktop app → Flask web app with Jinja2 templates
+- In-memory storage → SQLite database with persistent data
+- Single-user → Multi-user with role-based authentication and bcrypt-hashed passwords
+
+**📷 Scanner**
+- Desktop-only camera → Browser camera on any device, including mobile and desktop
+- No camera switching → Front/back camera toggle with device enumeration
+- Basic scan → Duplicate detection, audio beep, cooldown timer, and visual feedback
+
+**🎛️ New Modules**
+- QR code generation plus batch import from CSV/XLSX to individual QR images and ZIP download
+- Food attendance time-slot category
+- Activity log tracking all system actions
+- PDF attendance report export
+- Manual user and student CRUD without requiring CSV files
+
+**🎨 UI/UX**
+- Glassmorphism login with animated floating backgrounds
+- Dashboard with stat cards, count-up animations, and quick actions
+- Event cards with date badges, 3-dot menus, and section grouping for Today, Upcoming, and Past
+- Toast notification system with progress bars and auto-dismiss
+- Real-time search bar on the events page
+- Page fade-in transitions on navigation
+- Custom branded 404/500 error pages
+- Empty state illustrations with call-to-action buttons
+
+**🛡️ Reliability**
+- Input validation on all forms using required, maxlength, minlength, and pattern
+- Flash messages for create, edit, and delete operations
+- Sanitized error messages with no raw stack traces shown to users
+- Graceful camera permission handling with browser-specific hints
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| **Backend** | Python 3.8+, Flask 3.0, Gunicorn |
+| **Frontend** | Jinja2, Vanilla JS, CSS3 with custom properties and dark mode |
+| **Database** | SQLite3, file-based and zero-config |
+| **Auth** | bcrypt password hashing, Flask-Session (filesystem) |
+| **QR** | qrcode + Pillow for generation, jsQR for browser scanning |
+| **PDF** | ReportLab |
+| **Icons** | Font Awesome 6.5 |
+| **Fonts** | Google Fonts — Poppins for headings, Inter for body |
+| **Deployment** | Microsoft Azure App Service, Gunicorn WSGI |
+| **Domain** | Namecheap (.me TLD via GitHub Student Pack) |
+
+---
+
+## 📦 Local Setup
+
+### Demo Link
+
+Use this placeholder for the YouTube demo link until the final video is ready:
+
+https://www.youtube.com/watch?v=PLACEHOLDER
+
+### Prerequisites
+- Python 3.8 or higher
+- pip, which comes with Python
+
+### Installation
+
 ```bash
+# 1. Clone the repository
+git clone --branch master https://github.com/cloudy-april/QR-Attendance-Checker---Flask-Version.git
+cd QR-Attendance-Checker---Flask-Version
+
+# 2. Create virtual environment
+python -m venv .venv
+
+# 3. Activate it
+# Windows:
+.\.venv\Scripts\Activate.ps1
+# macOS/Linux:
 source .venv/bin/activate
-```
 
-### 4. Install dependencies
-```powershell
-pip install -r app/requirements.txt
-```
+# 4. Install dependencies
+pip install -r requirements.txt
 
-### 5. Run the app
-From project root:
-```powershell
+# 5. Run the app
 python app/app.py
 ```
 
-The app runs at:
-- http://127.0.0.1:5000
-- http://localhost:5000
+Open **http://localhost:5000** in your browser.
 
-## Default Login
-- Username: admin
-- Password: Admin@123
+### Default Login
+| Field | Value |
+|-------|-------|
+| Username | `admin` |
+| Password | `Admin@123` |
 
-## How to Use
-1. Log in with the default admin account.
-2. Create an event in Events.
-3. Go to QR Management.
-4. Upload a CSV file (see format below) to generate QR codes.
-5. Open Scanner and select an event.
-6. Scan generated QR codes to mark attendance.
-7. View attendance history and export PDF reports.
+---
 
-## CSV Format for QR Generation
-Use this header row:
+## 📁 Project Structure
+
+```
+QR-Attendance-Checker---Flask-Version/
+├── app/
+│   ├── app.py                      # Entry point — starts Flask server
+│   ├── pyproject.toml               # Project metadata
+│   ├── requirements.txt             # App-specific dependencies
+│   └── src/
+│       ├── flask_app.py             # App factory, blueprints, error handlers
+│       ├── config/
+│       │   └── constants.py         # App title, defaults, camera settings, colors
+│       ├── database/
+│       │   └── db_manager.py        # SQLite operations and database queries
+│       ├── routes/
+│       │   ├── api_routes.py        # REST API for attendance submit, quick-mark, export
+│       │   ├── attendance_routes.py # Scanner page and attendance history
+│       │   ├── auth_routes.py       # Login, logout, session management
+│       │   ├── dashboard_routes.py  # Dashboard and activity log
+│       │   ├── event_routes.py      # Event CRUD
+│       │   ├── qr_management_routes.py  # QR generation, CSV import, batch download
+│       │   └── user_routes.py       # User CRUD for admins
+│       ├── utils/
+│       │   ├── pdf_export.py        # ReportLab PDF generation
+│       │   └── qr_scanner.py        # QR code image generation with Pillow and qrcode
+│       ├── static/
+│       │   ├── css/style.css        # Styles, light/dark mode, responsive rules, animations
+│       │   ├── js/main.js           # Theme toggle, hamburger menu, toast system
+│       │   ├── js/modal.js          # Delete confirmation, alert modal, PDF export
+│       │   ├── js/scanner.js        # Camera management, QR detection, attendance submit
+│       │   └── images/              # Logo assets such as MS_Logo_White.png and MS_Logo_Blue.ico
+│       └── templates/
+│           ├── base.html            # Master layout with navbar, footer, modals, and toast container
+│           ├── login.html           # Glassmorphism login page
+│           ├── dashboard.html       # Admin/scanner dashboard with stats
+│           ├── dashboard_mobile.html
+│           ├── scanner.html         # Desktop QR scanner with camera picker dropdown
+│           ├── scanner_mobile.html  # Mobile QR scanner with camera toggle button
+│           ├── activity_log.html
+│           ├── attendance_history.html
+│           ├── events/              # list, create, edit, view
+│           ├── users/               # list, create, edit
+│           ├── qr/manage.html       # QR generation, CSV upload, student list
+│           └── errors/              # 404.html, 500.html
+├── android-app/                     # Companion Android app (WebView wrapper)
+├── requirements.txt                 # Top-level dependencies (same as app/)
+├── wsgi.py                          # WSGI entry point for Azure/Gunicorn
+├── startup.sh                       # Azure App Service startup script
+├── Dockerfile                       # Container deployment option
+├── runtime.txt                      # Python version for Azure
+└── sample_students.csv              # Example CSV for testing QR import
+```
+
+---
+
+## 💻 How to Use
+
+### For Admins
+
+1. **Login** → Use your admin credentials at the login page
+2. **Create an Event** → Go to Events → Create Event, then fill in the name, date, and description
+3. **Import Students** → Go to QR Management → Upload CSV with School ID, Name, Course, Year, and Section, then QR codes are auto-generated
+4. **Print/Share QR Codes** → Download individual codes or the batch ZIP and distribute them to students
+5. **Start Scanning** → Go to Scanner → Select an event and time slot, then point the camera at QR codes
+6. **Export Report** → Open the event details page and export the PDF report
+
+### For Scanners (Volunteers/Officers)
+
+1. **Login** → Use scanner credentials provided by the admin
+2. **Open Scanner** → Tap Start Scanning on the dashboard
+3. **Select Event** → Pick the active event and time slot
+4. **Scan** → Point the phone camera at student QR codes and attendance is recorded instantly
+5. **Switch Camera** → Tap the camera switch button to toggle front/back
+
+### CSV Format for Student Import
+
 ```csv
-School ID,Name,First Name,Last Name,Middle Initial,Year,Section,Course
+school_id,first_name,middle_initial,last_name,course,year,section
+2024-0001,Juan,A,Dela Cruz,BSCS,3,A
+2024-0002,Maria,B,Santos,BSIT,2,B
 ```
 
-A ready-to-use mock file is included:
-- sample_students.csv
+---
 
-Example rows:
-```csv
-STU101,Alex Cruz,Alex,Cruz,M,1,A,BS Computer Science
-STU102,Bianca Reyes,Bianca,Reyes,L,1,B,BS Information Technology
-```
+## 🔐 Security
 
-## Screenshots
+| Aspect | Implementation |
+|--------|---------------|
+| **Passwords** | bcrypt hashing, never stored in plaintext |
+| **Sessions** | Flask-Session with filesystem backend and permanent sessions |
+| **Access Control** | `@login_required` and `@admin_required` decorators on protected routes |
+| **Error Messages** | Sanitized, with no raw exceptions or stack traces shown to users |
+| **Input Validation** | Server-side and client-side HTML5 validation on all forms |
+| **CORS** | Flask-CORS configured for API endpoints |
 
-### App Preview
+---
 
-#### Dashboard
+## 🌐 Deployment (Azure)
 
-![Dashboard](https://raw.githubusercontent.com/thebaynal/QR-Attendance-Checker---Flask-Version/main/docs/screenshots/dashboard.png)
+MaScan is deployed on **Microsoft Azure App Service** on Linux with Python 3.12.
 
-#### Events Management
+### Quick Deploy
 
-![Events](https://raw.githubusercontent.com/thebaynal/QR-Attendance-Checker---Flask-Version/main/docs/screenshots/events.png)
-
-#### Login
-
-![Login](https://raw.githubusercontent.com/thebaynal/QR-Attendance-Checker---Flask-Version/main/docs/screenshots/login.png)
-
-#### QR Scanner
-
-![QR Scanner](https://raw.githubusercontent.com/thebaynal/QR-Attendance-Checker---Flask-Version/main/docs/screenshots/qr_scan.png)
-
-#### QR Management
-
-![QR Management](https://raw.githubusercontent.com/thebaynal/QR-Attendance-Checker---Flask-Version/main/docs/screenshots/qr-management.png)
-
-
-## Troubleshooting
-
-### Port already in use
 ```powershell
-$env:FLASK_RUN_PORT=5001
-python app/app.py
+# Build zip (excludes .git, __pycache__, .db, flask_session)
+$src = "C:\Users\Fred\QR-Attendance-Checker---Flask-Version"
+$dest = "C:\Users\Fred\mascan_slim.zip"
+# ... (zip creation script)
+
+# Deploy via Azure OneDeploy API
+az webapp deploy --name mascan-qr --resource-group mascan-rg --src-path $dest --type zip
 ```
 
-### Dependency install fails (Windows)
-```powershell
-python -m pip install --upgrade pip
-pip install -r app/requirements.txt
-```
+### Custom Domain
 
-### Scanner not detecting QR
-- Ensure webcam permission is allowed in browser.
-- Improve lighting and keep QR within frame.
-- Check camera is not used by another app.
+The app is accessible at **[www.mascan.me](https://www.mascan.me)** via a custom `.me` domain from Namecheap, with DNS pointing to Azure App Service and Azure-managed SSL.
 
-### Reset local data
-If needed, remove local DB/session files and rerun the app.
+---
 
-## Notes
-- QR import supports required and optional columns; include School ID and Name at minimum.
-- Keep your virtual environment activated while running the app.
+## 🐛 Troubleshooting
+
+| Problem | Solution |
+|---------|----------|
+| Port already in use | `$env:PORT = 5001; python app/app.py` |
+| Camera not working | Use HTTPS or localhost because cameras require a secure context |
+| Camera won't switch | Make sure the browser has camera permission, then refresh the page |
+| Database reset needed | Delete `mascan_attendance.db` and restart the app |
+| Virtual env issues | Run `deactivate`, then reactivate with `.venv\Scripts\Activate.ps1` |
+| Azure deploy fails | Run `az login` to refresh the token, then retry deploy |
+
+---
+
+## 👥 Team
+
+**MaScan** is developed as a Software Engineering course project.
+
+---
+
+## 📄 License
+
+This project is open source and available under the [MIT License](LICENSE).
+
+---
+
+<div align="center">
+
+**🎯 MaScan — QR Attendance System**
+
+*Built with ❤️ for student organizations*
+
+</div>
