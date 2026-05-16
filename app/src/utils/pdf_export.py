@@ -1,0 +1,347 @@
+# utils/pdf_export.py
+"""Enhanced PDF export with section grouping."""
+
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter, landscape
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak, Image, KeepTogether
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+from datetime import datetime
+import os
+
+
+class AttendancePDFExporter:
+    """Export attendance data to formatted PDF with section grouping."""
+    
+    def __init__(self, db):
+        self.db = db
+        self.styles = getSampleStyleSheet()
+        self._setup_custom_styles()
+    
+    def _setup_custom_styles(self):
+        """Setup custom paragraph styles."""
+        self.styles.add(ParagraphStyle(
+            name='EventTitle',
+            parent=self.styles['Heading1'],
+            fontSize=18,
+            textColor=colors.HexColor('#1976D2'),
+            spaceAfter=12,
+            alignment=TA_CENTER,
+            fontName='Helvetica-Bold'
+        ))
+        
+        self.styles.add(ParagraphStyle(
+            name='SectionHeader',
+            parent=self.styles['Heading2'],
+            fontSize=14,
+            textColor=colors.HexColor('#1976D2'),
+            spaceAfter=8,
+            spaceBefore=12,
+            fontName='Helvetica-Bold',
+            alignment=TA_LEFT
+        ))
+        
+        self.styles.add(ParagraphStyle(
+            name='Stats',
+            parent=self.styles['Normal'],
+            fontSize=10,
+            textColor=colors.gray,
+            spaceAfter=10,
+            alignment=TA_CENTER
+        ))
+        
+        self.styles.add(ParagraphStyle(
+            name='SummaryHeader',
+            parent=self.styles['Heading2'],
+            fontSize=16,
+            textColor=colors.HexColor('#333333'),
+            spaceAfter=10,
+            spaceBefore=20,
+            fontName='Helvetica-Bold',
+            alignment=TA_CENTER
+        ))
+    
+    def export_attendance(self, event_id: str, filename: str):
+        """Export attendance grouped by section."""
+        try:
+            print(f"DEBUG: Starting PDF export to {filename}")
+            
+            # Get event info
+            event = self.db.get_event_by_id(event_id)
+            if not event:
+                raise ValueError("Event not found")
+            
+            print(f"DEBUG: Event found: {event['name']}")
+            
+            # Get attendance data - handle both old and new database structures
+            try:
+                attendance_by_section = self.db.get_attendance_by_section(event_id)
+                print(f"DEBUG: Got attendance by section: {len(attendance_by_section)} sections")
+            except Exception as e:
+                print(f"Error getting attendance by section: {e}")
+                # Fallback: try to get attendance from old table structure
+                attendance_by_section = self._get_attendance_fallback(event_id)
+                if not attendance_by_section:
+                    raise ValueError("Could not retrieve attendance data")
+                print(f"DEBUG: Using fallback method, got {len(attendance_by_section)} sections")
+            
+            # Create PDF document
+            doc = SimpleDocTemplate(
+                filename,
+                pagesize=landscape(letter),
+                rightMargin=0.5*inch,
+                leftMargin=0.5*inch,
+                topMargin=0.75*inch,
+                bottomMargin=0.5*inch
+            )
+            
+            story = []
+            
+            # Top Banner with Logo if exists
+            logo_path = os.path.join(os.path.dirname(__file__), '..', 'assets', 'MS_Logo_Blue.png')
+            if os.path.exists(logo_path):
+                logo = Image(logo_path, width=2*inch, height=0.6*inch)
+                logo.hAlign = 'CENTER'
+                story.append(logo)
+                story.append(Spacer(1, 0.2*inch))
+            
+            # Title
+            title = Paragraph(f"Attendance Report: {event['name']}", self.styles['EventTitle'])
+            story.append(title)
+            
+            # Event details
+            date_info = Paragraph(
+                f"Date: {event['date']} | Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')} | System: MaScan Global",
+                self.styles['Stats']
+            )
+            story.append(date_info)
+            story.append(Spacer(1, 0.3*inch))
+            
+            # Handle empty attendance
+            if not attendance_by_section:
+                empty_text = Paragraph(
+                    "No attendance records found for this event.",
+                    self.styles['Normal']
+                )
+                story.append(empty_text)
+            else:
+                # Process each section
+                for section_name, students in sorted(attendance_by_section.items()):
+                    # Check if any student has lunch data
+                    has_lunch_data = any(s.get('lunch_status') and s.get('lunch_status') != 'Absent' for s in students)
+                    
+                    # Section header
+                    section_header = Paragraph(f"Section: {section_name}", self.styles['SectionHeader'])
+                    story.append(section_header)
+                    
+                    # Calculate statistics
+                    total_students = len(students)
+                    morning_present = sum(1 for s in students if s.get('morning_status') == 'Present')
+                    lunch_present = sum(1 for s in students if s.get('lunch_status') == 'Present')
+                    afternoon_present = sum(1 for s in students if s.get('afternoon_status') == 'Present')
+                    
+                    # Build stats text based on lunch data availability
+                    if has_lunch_data:
+                        stats_text = f"Total Students: {total_students} | Morning: {morning_present}/{total_students} | Lunch: {lunch_present}/{total_students} | Afternoon: {afternoon_present}/{total_students}"
+                    else:
+                        stats_text = f"Total Students: {total_students} | Morning: {morning_present}/{total_students} | Afternoon: {afternoon_present}/{total_students}"
+                    
+                    stats = Paragraph(stats_text, self.styles['Normal'])
+                    story.append(stats)
+                    story.append(Spacer(1, 0.15*inch))
+                    
+                    # Create table data - dynamic columns based on lunch data
+                    if has_lunch_data:
+                        table_data = [
+                            ['#', 'Student ID', 'Name', 'AM Time', 'AM Status', 'Lunch Time', 'Lunch Status', 'PM Time', 'PM Status']
+                        ]
+                        col_widths = [0.3*inch, 0.9*inch, 1.8*inch, 0.8*inch, 0.8*inch, 0.8*inch, 0.8*inch, 0.8*inch, 0.8*inch]
+                    else:
+                        table_data = [
+                            ['#', 'Student ID', 'Name', 'AM Time', 'AM Status', 'PM Time', 'PM Status']
+                        ]
+                        col_widths = [0.3*inch, 1.0*inch, 2.2*inch, 1.0*inch, 1.0*inch, 1.0*inch, 1.0*inch]
+                    
+                    for idx, student in enumerate(students, 1):
+                        # Format times to HH:MM instead of HH:MM:SS
+                        morning_time = self._format_time(student.get('morning_time'))
+                        lunch_time = self._format_time(student.get('lunch_time'))
+                        afternoon_time = self._format_time(student.get('afternoon_time'))
+                        
+                        if has_lunch_data:
+                            table_data.append([
+                                str(idx),
+                                student.get('school_id', ''),
+                                student.get('name', ''),
+                                morning_time,
+                                student.get('morning_status', 'Absent'),
+                                lunch_time,
+                                student.get('lunch_status', 'Absent'),
+                                afternoon_time,
+                                student.get('afternoon_status', 'Absent')
+                            ])
+                        else:
+                            table_data.append([
+                                str(idx),
+                                student.get('school_id', ''),
+                                student.get('name', ''),
+                                morning_time,
+                                student.get('morning_status', 'Absent'),
+                                afternoon_time,
+                                student.get('afternoon_status', 'Absent')
+                            ])
+                    
+                    # Create table
+                    table = Table(table_data, colWidths=col_widths, repeatRows=1)
+                    
+                    # Style the table
+                    table.setStyle(TableStyle([
+                        # Header styling
+                        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1976D2')),
+                        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                        ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+                        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                        ('FONTSIZE', (0, 0), (-1, 0), 10),
+                        ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+                        ('TOPPADDING', (0, 0), (-1, 0), 8),
+                        
+                        # Body styling
+                        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                        ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
+                        ('ALIGN', (0, 1), (0, -1), 'CENTER'),  # # column
+                        ('ALIGN', (1, 1), (1, -1), 'LEFT'),    # ID column
+                        ('ALIGN', (2, 1), (2, -1), 'LEFT'),    # Name column
+                        ('ALIGN', (3, 1), (-1, -1), 'CENTER'), # Time/Status columns
+                        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+                        ('FONTSIZE', (0, 1), (-1, -1), 9),
+                        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F5F5F5')]),
+                        
+                        # Borders
+                        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+                        ('LINEBELOW', (0, 0), (-1, 0), 2, colors.HexColor('#1976D2')),
+                        
+                        # Padding
+                        ('TOPPADDING', (0, 1), (-1, -1), 6),
+                        ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+                        ('LEFTPADDING', (0, 0), (-1, -1), 5),
+                        ('RIGHTPADDING', (0, 0), (-1, -1), 5),
+                    ]))
+                    
+                    # Color code statuses based on available columns
+                    for row_idx, student in enumerate(students, 1):
+                        # Morning status (always column 4)
+                        if student.get('morning_status') == 'Present':
+                            table.setStyle(TableStyle([
+                                ('BACKGROUND', (4, row_idx), (4, row_idx), colors.HexColor('#C8E6C9')),
+                                ('TEXTCOLOR', (4, row_idx), (4, row_idx), colors.HexColor('#2E7D32')),
+                                ('FONTNAME', (4, row_idx), (4, row_idx), 'Helvetica-Bold'),
+                            ]))
+                        else:
+                            table.setStyle(TableStyle([
+                                ('BACKGROUND', (4, row_idx), (4, row_idx), colors.HexColor('#FFCDD2')),
+                                ('TEXTCOLOR', (4, row_idx), (4, row_idx), colors.HexColor('#C62828')),
+                                ('FONTNAME', (4, row_idx), (4, row_idx), 'Helvetica-Bold'),
+                            ]))
+                        
+                        if has_lunch_data:
+                            # Lunch status (column 6) - only if lunch data exists
+                            if student.get('lunch_status') == 'Present':
+                                table.setStyle(TableStyle([
+                                    ('BACKGROUND', (6, row_idx), (6, row_idx), colors.HexColor('#C8E6C9')),
+                                    ('TEXTCOLOR', (6, row_idx), (6, row_idx), colors.HexColor('#2E7D32')),
+                                    ('FONTNAME', (6, row_idx), (6, row_idx), 'Helvetica-Bold'),
+                                ]))
+                            else:
+                                table.setStyle(TableStyle([
+                                    ('BACKGROUND', (6, row_idx), (6, row_idx), colors.HexColor('#FFCDD2')),
+                                    ('TEXTCOLOR', (6, row_idx), (6, row_idx), colors.HexColor('#C62828')),
+                                    ('FONTNAME', (6, row_idx), (6, row_idx), 'Helvetica-Bold'),
+                                ]))
+                            
+                            # Afternoon status (column 8) - when lunch exists
+                            afternoon_col = 8
+                        else:
+                            # Afternoon status (column 6) - when lunch doesn't exist
+                            afternoon_col = 6
+                        
+                        # Afternoon status - column changes based on lunch data
+                        if student.get('afternoon_status') == 'Present':
+                            table.setStyle(TableStyle([
+                                ('BACKGROUND', (afternoon_col, row_idx), (afternoon_col, row_idx), colors.HexColor('#C8E6C9')),
+                                ('TEXTCOLOR', (afternoon_col, row_idx), (afternoon_col, row_idx), colors.HexColor('#2E7D32')),
+                                ('FONTNAME', (afternoon_col, row_idx), (afternoon_col, row_idx), 'Helvetica-Bold'),
+                            ]))
+                        else:
+                            table.setStyle(TableStyle([
+                                ('BACKGROUND', (afternoon_col, row_idx), (afternoon_col, row_idx), colors.HexColor('#FFCDD2')),
+                                ('TEXTCOLOR', (afternoon_col, row_idx), (afternoon_col, row_idx), colors.HexColor('#C62828')),
+                                ('FONTNAME', (afternoon_col, row_idx), (afternoon_col, row_idx), 'Helvetica-Bold'),
+                            ]))
+                    
+                    story.append(table)
+                    story.append(PageBreak())  # New page for each section
+            
+            # Build PDF document
+            print(f"DEBUG: Building PDF with {len(story)} elements")
+            doc.build(story)
+            
+            print(f"DEBUG: PDF build completed successfully")
+            return filename
+            
+        except Exception as e:
+            print(f"ERROR in export_attendance: {e}")
+            import traceback
+            traceback.print_exc()
+            raise
+    
+    def _format_time(self, time_str: str) -> str:
+        """Format time to HH:MM format."""
+        if not time_str or time_str == '-':
+            return '-'
+        try:
+            # Extract HH:MM from ISO format (2026-03-14T14:30:45) or HH:MM:SS format
+            if 'T' in time_str:
+                # ISO format: extract time part after T
+                time_part = time_str.split('T')[1]
+                return time_part[:5]  # HH:MM
+            else:
+                # Direct time format: extract first 5 chars
+                return time_str[:5]
+        except:
+            return time_str
+    
+    def _get_attendance_fallback(self, event_id: str) -> dict:
+        """Fallback method to get attendance from old table structure."""
+        try:
+            # Try to get from old attendance table
+            query = """
+            SELECT user_id, user_name, timestamp 
+            FROM attendance 
+            WHERE event_id = ?
+            ORDER BY timestamp DESC
+            """
+            results = self.db._execute(query, (event_id,), fetch_all=True)
+            
+            if not results:
+                return {}
+            
+            # Group by a generic section
+            grouped_data = {"General": []}
+            for row in results:
+                user_id, user_name, timestamp = row
+                grouped_data["General"].append({
+                    'school_id': user_id,
+                    'name': user_name,
+                    'morning_time': timestamp,
+                    'morning_status': 'Present',
+                    'lunch_time': '',
+                    'lunch_status': 'Absent',
+                    'afternoon_time': '',
+                    'afternoon_status': 'Absent'
+                })
+            
+            return grouped_data
+        except Exception as e:
+            print(f"Fallback method failed: {e}")
+            return {}

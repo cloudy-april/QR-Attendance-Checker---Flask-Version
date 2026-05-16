@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Print QR Codes</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #fff;
+        }
+        .controls {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .print-btn {
+            background: #0d6efd;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .print-btn:hover {
+            background: #0b5ed7;
+        }
+        .grid-container {
+            display: grid;
+            gap: 20px;
+        }
+        /* Dynamic grid columns based on per_page setting */
+        .grid-layout-6 { grid-template-columns: repeat(2, 1fr); gap: 40px; }
+        .grid-layout-9 { grid-template-columns: repeat(3, 1fr); }
+        .grid-layout-12 { grid-template-columns: repeat(4, 1fr); }
+
+        .qr-card {
+            border: 2px dashed #ccc;
+            padding: 15px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            page-break-inside: avoid;
+        }
+        .qr-img {
+            max-width: 150px;
+            height: auto;
+            margin-bottom: 15px;
+        }
+        .student-info {
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        .student-name {
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .student-id {
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .student-course {
+            font-size: 12px;
+            color: #444;
+        }
+        @media print {
+            .controls {
+                display: none;
+            }
+            body {
+                padding: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <h3>Printing {{ codes|length }} QR Codes</h3>
+        <button class="print-btn" onclick="window.print()">Print Document</button>
+    </div>
+
+    <div class="grid-container grid-layout-{{ per_page }}">
+        {% for code in codes %}
+        <div class="qr-card">
+            <img src="data:image/png;base64,{{ code.qr_data_encoded }}" alt="QR Code" class="qr-img">
+            <div class="student-info">
+                <div class="student-name">{{ code.name }}</div>
+                <div class="student-id">{{ code.school_id }}</div>
+                <div class="student-course">
+                    {% if code.course %}{{ code.course }}{% endif %}
+                    {% if code.year_level %}{{ code.year_level }}{% endif %}
+                    {% if code.section %}- {{ code.section }}{% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        // Auto trigger print dialogue when loaded via a new window
+        window.addEventListener('load', () => {
+             // Optional auto-print can go here
+        });
+    </script>
+</body>
+</html>

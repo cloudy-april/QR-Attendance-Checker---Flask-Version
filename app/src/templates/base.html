@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}MaScan - QR Attendance{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWix+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.2/css/all.min.css">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    {% if session.get('username') %}
+    <nav class="navbar">
+        <div class="navbar-container">
+            <div class="navbar-brand">
+                <a href="{{ url_for('dashboard.home') }}">
+                    <span class="logo-text"><img src="{{ url_for('static', filename='images/MS_Logo_Blue.ico') }}" alt="Logo"> MaScan</span>
+                </a>
+            </div>
+            <button class="hamburger-menu" id="hamburgerMenu" aria-label="Toggle menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <div class="navbar-menu" id="navbarMenu">
+                <a href="{{ url_for('dashboard.home') }}" class="nav-link">Dashboard</a>
+                <a href="{{ url_for('event.list_events') }}" class="nav-link">Events</a>
+                <a href="{{ url_for('attendance.scanner') }}" class="nav-link">Scanner</a>
+                {% if session.get('username') == 'admin' or user_role == 'admin' %}
+                <a href="{{ url_for('qr_mgmt.manage_qr') }}" class="nav-link">QR Management</a>
+                <a href="{{ url_for('user.list_users') }}" class="nav-link">Users</a>
+                {% endif %}
+                <a href="{{ url_for('dashboard.activity_log') }}" class="nav-link">Activity Log</a>
+            </div>
+            <div class="navbar-right" id="navbarRight">
+                <span class="user-info">{{ session.get('username') }} ({{ user_role }})</span>
+                <button class="theme-toggle" id="themeToggle" title="Switch to dark mode" aria-label="Toggle theme">
+                    <i id="themeToggleIcon" class="fa-solid fa-moon"></i>
+                </button>
+                <form method="post" action="{{ url_for('auth.logout') }}" style="display: inline;">
+                    <button type="submit" class="btn btn-logout">Logout</button>
+                </form>
+            </div>
+        </div>
+    </nav>
+    {% endif %}
+
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/modal.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+
+    {% if session.get('username') %}
+    <!-- Mobile Bottom Navigation -->
+    <div class="bottom-nav">
+        <a href="{{ url_for('dashboard.home') }}" class="bottom-nav-item">
+            <i class="fa-solid fa-house"></i>
+            <span>Home</span>
+        </a>
+        <a href="{{ url_for('event.list_events') }}" class="bottom-nav-item">
+            <i class="fa-solid fa-calendar-days"></i>
+            <span>Events</span>
+        </a>
+        <a href="{{ url_for('attendance.scanner') }}" class="bottom-nav-item scan-action">
+            <div class="scan-btn-wrapper">
+                <i class="fa-solid fa-qrcode"></i>
+            </div>
+            <span>Scan</span>
+        </a>
+        <a href="{{ url_for('qr_mgmt.manage_qr') }}" class="bottom-nav-item">
+            <i class="fa-solid fa-file-csv"></i>
+            <span>QR</span>
+        </a>
+        <a href="{{ url_for('dashboard.activity_log') }}" class="bottom-nav-item">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+            <span>Activity</span>
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteConfirmModal" class="modal-backdrop">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <h2 class="modal-title">Delete Confirmation</h2>
+            </div>
+            <div class="modal-body">
+                <p id="modalMessage">Are you sure you want to delete this item?</p>
+                <div id="modalItemInfo" class="modal-item-info" style="display: none;"></div>
+                <p style="color: var(--text-color); font-size: 0.9em; margin-top: 16px;">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn modal-btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+                <button class="modal-btn modal-btn-delete" onclick="confirmDelete()">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Generic Alert Modal -->
+    <div id="alertModal" class="modal-backdrop">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div id="alertModalIcon" class="modal-icon"><i class="fa-solid fa-circle-exclamation"></i></div>
+                <h2 id="alertModalTitle" class="modal-title">Alert</h2>
+            </div>
+            <div class="modal-body">
+                <p id="alertModalMessage"></p>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn modal-btn-primary" onclick="closeAlertModal()">OK</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

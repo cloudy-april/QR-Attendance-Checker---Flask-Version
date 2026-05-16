@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MaScan Azure Architecture Diagram</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .diagram-wrapper {
+            width: 1400px;
+            background: #ffffff;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .diagram-title {
+            background: linear-gradient(135deg, #0078d4, #005a9e);
+            color: white;
+            padding: 20px 30px;
+            text-align: center;
+        }
+
+        .diagram-title h1 {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .diagram-title p {
+            font-size: 13px;
+            opacity: 0.85;
+        }
+
+        .diagram-canvas {
+            position: relative;
+            width: 100%;
+            height: 900px;
+            background: #fafbfc;
+        }
+
+        /* SVG layer for arrows */
+        .arrow-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Security Boundary */
+        .security-boundary {
+            position: absolute;
+            border: 3px dashed #e74c3c;
+            border-radius: 16px;
+            background: rgba(231, 76, 60, 0.03);
+            z-index: 0;
+        }
+
+        .security-boundary .boundary-label {
+            position: absolute;
+            top: -14px;
+            left: 20px;
+            background: #e74c3c;
+            color: white;
+            padding: 4px 14px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .private-boundary {
+            top: 240px;
+            left: 40px;
+            right: 40px;
+            bottom: 40px;
+            width: calc(100% - 80px);
+            height: 620px;
+        }
+
+        .public-zone {
+            position: absolute;
+            border: 2px dashed #27ae60;
+            border-radius: 12px;
+            background: rgba(39, 174, 96, 0.03);
+        }
+
+        .public-zone .boundary-label {
+            position: absolute;
+            top: -14px;
+            left: 20px;
+            background: #27ae60;
+            color: white;
+            padding: 4px 14px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        /* Resource boxes */
+        .resource {
+            position: absolute;
+            background: white;
+            border: 2px solid #d0d7de;
+            border-radius: 10px;
+            padding: 14px 16px;
+            text-align: center;
+            z-index: 2;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            transition: box-shadow 0.2s, border-color 0.2s;
+            min-width: 140px;
+        }
+
+        .resource:hover {
+            box-shadow: 0 4px 16px rgba(0,120,212,0.15);
+            border-color: #0078d4;
+        }
+
+        .resource .icon {
+            font-size: 36px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .resource .name {
+            font-size: 12px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 3px;
+        }
+
+        .resource .type {
+            font-size: 10px;
+            color: #586069;
+            margin-bottom: 4px;
+        }
+
+        .resource .detail {
+            font-size: 9px;
+            color: #0078d4;
+            font-weight: 600;
+            background: #e8f4fd;
+            padding: 2px 8px;
+            border-radius: 8px;
+            display: inline-block;
+            margin-top: 2px;
+        }
+
+        /* Optimization badges */
+        .optimization-badge {
+            position: absolute;
+            background: linear-gradient(135deg, #ff6b35, #f7c948);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 9px;
+            font-weight: 700;
+            white-space: nowrap;
+            z-index: 3;
+            box-shadow: 0 2px 6px rgba(255,107,53,0.3);
+        }
+
+        .optimization-badge.green {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            box-shadow: 0 2px 6px rgba(39,174,96,0.3);
+        }
+
+        .optimization-badge.blue {
+            background: linear-gradient(135deg, #0078d4, #00bcf2);
+            box-shadow: 0 2px 6px rgba(0,120,212,0.3);
+        }
+
+        .optimization-badge.purple {
+            background: linear-gradient(135deg, #6f42c1, #8969d4);
+            box-shadow: 0 2px 6px rgba(111,66,193,0.3);
+        }
+
+        /* Protocol labels on arrows */
+        .protocol-label {
+            position: absolute;
+            background: #2c3e50;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 9px;
+            font-weight: 600;
+            z-index: 4;
+            letter-spacing: 0.3px;
+        }
+
+        /* Users group */
+        .users-group {
+            position: absolute;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            z-index: 2;
+        }
+
+        .users-group .user-icons {
+            font-size: 42px;
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 6px;
+        }
+
+        .users-group .label {
+            font-size: 13px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+
+        .users-group .sublabel {
+            font-size: 10px;
+            color: #586069;
+        }
+
+        /* Legend */
+        .legend {
+            position: absolute;
+            bottom: 15px;
+            right: 60px;
+            background: white;
+            border: 1.5px solid #d0d7de;
+            border-radius: 8px;
+            padding: 12px 16px;
+            z-index: 5;
+            font-size: 10px;
+        }
+
+        .legend h4 {
+            font-size: 11px;
+            margin-bottom: 8px;
+            color: #1a1a2e;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 5px;
+        }
+
+        .legend-line {
+            width: 30px;
+            height: 3px;
+            border-radius: 2px;
+        }
+
+        .legend-dash {
+            width: 30px;
+            height: 0;
+            border-top: 3px dashed;
+        }
+
+        /* Optimizations panel */
+        .optimizations-panel {
+            position: absolute;
+            bottom: 15px;
+            left: 60px;
+            background: white;
+            border: 1.5px solid #d0d7de;
+            border-radius: 8px;
+            padding: 12px 16px;
+            z-index: 5;
+            max-width: 380px;
+        }
+
+        .optimizations-panel h4 {
+            font-size: 11px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 8px;
+        }
+
+        .opt-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            margin-bottom: 6px;
+            font-size: 10px;
+            color: #333;
+        }
+
+        .opt-item .opt-icon {
+            font-size: 12px;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        .opt-item strong {
+            color: #0078d4;
+        }
+
+        /* Region label */
+        .region-label {
+            position: absolute;
+            top: 255px;
+            right: 60px;
+            background: #0078d4;
+            color: white;
+            padding: 5px 14px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            z-index: 5;
+        }
+
+        /* Resource Group label */
+        .rg-label {
+            position: absolute;
+            top: 268px;
+            left: 70px;
+            font-size: 14px;
+            font-weight: 700;
+            color: #e74c3c;
+            z-index: 5;
+        }
+
+        .rg-sublabel {
+            font-size: 10px;
+            font-weight: 400;
+            color: #586069;
+        }
+
+        /* App Service instances group */
+        .instance-group {
+            position: absolute;
+            border: 1.5px solid #0078d4;
+            border-radius: 10px;
+            background: rgba(0, 120, 212, 0.03);
+            z-index: 1;
+        }
+
+        .instance-group .group-label {
+            position: absolute;
+            top: -12px;
+            left: 15px;
+            background: #0078d4;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 8px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        /* NSG badge */
+        .nsg-badge {
+            position: absolute;
+            background: #e74c3c;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 9px;
+            font-weight: 600;
+            z-index: 4;
+        }
+
+        @media print {
+            body { padding: 0; }
+            .diagram-wrapper { border: none; border-radius: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="diagram-wrapper">
+        <div class="diagram-title">
+            <h1>☁️ MaScan QR Attendance Checker — Azure Cloud Architecture</h1>
+            <p>CSEC 3 Cloud Computing Final Project | Region: Southeast Asia | Resource Group: mascan-rg</p>
+        </div>
+
+        <div class="diagram-canvas">
+
+            <!-- SVG Arrow Layer -->
+            <svg class="arrow-layer" viewBox="0 0 1400 900" preserveAspectRatio="xMidYMid meet">
+                <defs>
+                    <marker id="arrowBlue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#0078d4"/>
+                    </marker>
+                    <marker id="arrowGreen" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#27ae60"/>
+                    </marker>
+                    <marker id="arrowOrange" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#e67e22"/>
+                    </marker>
+                    <marker id="arrowPurple" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#6f42c1"/>
+                    </marker>
+                </defs>
+
+                <!-- Users → Application Gateway -->
+                <line x1="700" y1="105" x2="700" y2="290" stroke="#0078d4" stroke-width="3" marker-end="url(#arrowBlue)"/>
+
+                <!-- App Gateway → NSG Firewall line -->
+                <line x1="700" y1="370" x2="700" y2="420" stroke="#e74c3c" stroke-width="2.5" stroke-dasharray="6,4" marker-end="url(#arrowBlue)"/>
+
+                <!-- NSG → App Service Plan group -->
+                <line x1="700" y1="445" x2="700" y2="470" stroke="#0078d4" stroke-width="3" marker-end="url(#arrowBlue)"/>
+
+                <!-- App Service Instance 1 → SQL DB -->
+                <line x1="580" y1="590" x2="350" y2="700" stroke="#27ae60" stroke-width="2.5" marker-end="url(#arrowGreen)"/>
+
+                <!-- App Service Instance 2 → SQL DB -->
+                <line x1="780" y1="590" x2="350" y2="710" stroke="#27ae60" stroke-width="2.5" marker-end="url(#arrowGreen)"/>
+
+                <!-- App Service Instance 1 → Storage -->
+                <line x1="580" y1="590" x2="700" y2="700" stroke="#e67e22" stroke-width="2.5" marker-end="url(#arrowOrange)"/>
+
+                <!-- App Service Instance 2 → Storage -->
+                <line x1="780" y1="590" x2="700" y2="700" stroke="#e67e22" stroke-width="2.5" marker-end="url(#arrowOrange)"/>
+
+                <!-- App Service Plan → App Insights -->
+                <line x1="850" y1="540" x2="1050" y2="540" stroke="#6f42c1" stroke-width="2.5" marker-end="url(#arrowPurple)"/>
+
+                <!-- SQL DB Firewall dash -->
+                <rect x="230" y="690" width="240" height="90" rx="8" fill="none" stroke="#e74c3c" stroke-width="1.5" stroke-dasharray="5,3"/>
+            </svg>
+
+            <!-- USERS -->
+            <div class="users-group">
+                <div class="user-icons">
+                    <span>👩‍💻</span><span>👨‍🎓</span><span>📱</span><span>👩‍🎓</span><span>💻</span>
+                </div>
+                <div class="label">End Users (Students & Staff)</div>
+                <div class="sublabel">Web Browser / Mobile Device</div>
+            </div>
+
+            <!-- PUBLIC ZONE -->
+            <div class="public-zone" style="top: 130px; left: 350px; width: 700px; height: 110px;">
+                <span class="boundary-label">🌐 PUBLIC ZONE</span>
+            </div>
+
+            <!-- PROTOCOL: HTTPS -->
+            <div class="protocol-label" style="top: 170px; left: 730px;">HTTPS :443</div>
+
+            <!-- APPLICATION GATEWAY -->
+            <div class="resource" style="top: 155px; left: 605px; min-width: 190px;">
+                <span class="icon">⚖️</span>
+                <div class="name">Application Gateway</div>
+                <div class="type">mascan-gateway | Standard_v2</div>
+                <div class="detail">Load Balancer + WAF</div>
+            </div>
+
+            <!-- Optimization: Fault Tolerance -->
+            <div class="optimization-badge" style="top: 152px; left: 810px;">⚡ FAULT TOLERANCE</div>
+
+            <!-- SECURITY BOUNDARY (Azure Private Network) -->
+            <div class="security-boundary private-boundary">
+                <span class="boundary-label">🔒 AZURE PRIVATE NETWORK (VNet: mascan-vnet)</span>
+            </div>
+
+            <!-- Region Label -->
+            <div class="region-label">📍 Southeast Asia</div>
+
+            <!-- Resource Group Label -->
+            <div class="rg-label">
+                📁 mascan-rg
+                <span class="rg-sublabel">(Resource Group)</span>
+            </div>
+
+            <!-- NSG Firewall -->
+            <div class="nsg-badge" style="top: 420px; left: 645px;">🛡️ NSG Firewall Rules</div>
+
+            <!-- PROTOCOL: HTTP Internal -->
+            <div class="protocol-label" style="top: 395px; left: 730px;">HTTP :8000</div>
+
+            <!-- APP SERVICE PLAN GROUP -->
+            <div class="instance-group" style="top: 460px; left: 440px; width: 420px; height: 150px;">
+                <span class="group-label">App Service Plan: ASP-mascarqr (B2 Standard)</span>
+            </div>
+
+            <!-- App Service Instance 1 -->
+            <div class="resource" style="top: 490px; left: 480px; min-width: 150px;">
+                <span class="icon">🌐</span>
+                <div class="name">mascan-qr</div>
+                <div class="type">App Service Instance 1</div>
+                <div class="detail">Python 3.10 | Flask</div>
+            </div>
+
+            <!-- App Service Instance 2 -->
+            <div class="resource" style="top: 490px; left: 680px; min-width: 150px;">
+                <span class="icon">🌐</span>
+                <div class="name">mascan-qr-2</div>
+                <div class="type">App Service Instance 2</div>
+                <div class="detail">Python 3.10 | Flask</div>
+            </div>
+
+            <!-- Optimization: Autoscale -->
+            <div class="optimization-badge green" style="top: 460px; left: 360px;">📈 AUTOSCALE: 2–5 instances (CPU > 70%)</div>
+
+            <!-- PROTOCOL Labels for DB and Storage -->
+            <div class="protocol-label" style="top: 640px; left: 410px;">TDS :1433</div>
+            <div class="protocol-label" style="top: 640px; left: 710px;">HTTPS :443</div>
+
+            <!-- SQL DATABASE -->
+            <div class="resource" style="top: 690px; left: 230px; min-width: 195px;">
+                <span class="icon">🗄️</span>
+                <div class="name">mascan-db</div>
+                <div class="type">Azure SQL Database | Standard S1</div>
+                <div class="detail">20 DTU | Firewall Protected</div>
+            </div>
+
+            <!-- Optimization: SQL Firewall -->
+            <div class="optimization-badge purple" style="top: 685px; left: 140px;">🔐 SQL Firewall</div>
+
+            <!-- NSG label on SQL -->
+            <div class="nsg-badge" style="top: 770px; left: 265px; font-size: 8px;">IP Whitelist + Azure Services Only</div>
+
+            <!-- STORAGE ACCOUNT -->
+            <div class="resource" style="top: 690px; left: 610px; min-width: 195px;">
+                <span class="icon">📦</span>
+                <div class="name">mascanstorage</div>
+                <div class="type">Azure Storage Account | LRS</div>
+                <div class="detail">Blob: uploads (CSV, PDF)</div>
+            </div>
+
+            <!-- APPLICATION INSIGHTS -->
+            <div class="resource" style="top: 480px; left: 1020px; min-width: 185px;">
+                <span class="icon">📊</span>
+                <div class="name">mascan-insights</div>
+                <div class="type">Application Insights</div>
+                <div class="detail">Monitoring + Telemetry</div>
+            </div>
+
+            <!-- Optimization: Monitoring -->
+            <div class="optimization-badge blue" style="top: 475px; left: 1030px;">🔍 ADVANCED MONITORING</div>
+
+            <!-- Telemetry protocol -->
+            <div class="protocol-label" style="top: 520px; left: 925px;">Telemetry SDK</div>
+
+            <!-- GitHub Actions (CI/CD) -->
+            <div class="resource" style="top: 690px; left: 980px; min-width: 185px;">
+                <span class="icon">🔄</span>
+                <div class="name">GitHub Actions</div>
+                <div class="type">CI/CD Pipeline</div>
+                <div class="detail">Auto Deploy on Push</div>
+            </div>
+
+            <!-- Optimization: CI/CD -->
+            <div class="optimization-badge green" style="top: 685px; left: 990px;">🚀 CONTINUOUS DEPLOYMENT</div>
+
+            <!-- LEGEND -->
+            <div class="legend">
+                <h4>Legend</h4>
+                <div class="legend-item">
+                    <div class="legend-line" style="background: #0078d4;"></div>
+                    <span>User Traffic / HTTP</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-line" style="background: #27ae60;"></div>
+                    <span>Database Connection (TDS)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-line" style="background: #e67e22;"></div>
+                    <span>Storage Access (HTTPS)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-line" style="background: #6f42c1;"></div>
+                    <span>Monitoring / Telemetry</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dash" style="border-color: #e74c3c;"></div>
+                    <span>Security Boundary</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dash" style="border-color: #27ae60;"></div>
+                    <span>Public Zone</span>
+                </div>
+            </div>
+
+            <!-- OPTIMIZATIONS PANEL -->
+            <div class="optimizations-panel">
+                <h4>☁️ Cloud Optimizations Implemented</h4>
+                <div class="opt-item">
+                    <span class="opt-icon">⚡</span>
+                    <span><strong>Fault Tolerance:</strong> 2 App Service instances across Availability Zones with Application Gateway health probes for zero-downtime failover</span>
+                </div>
+                <div class="opt-item">
+                    <span class="opt-icon">📈</span>
+                    <span><strong>Autoscaling:</strong> CPU-based rules (scale out at >70%, scale in at <30%) with 2–5 instance range for elastic capacity</span>
+                </div>
+                <div class="opt-item">
+                    <span class="opt-icon">🔍</span>
+                    <span><strong>Advanced Monitoring:</strong> Application Insights collects request metrics, response times, failure rates, and dependency tracking</span>
+                </div>
+                <div class="opt-item">
+                    <span class="opt-icon">🔐</span>
+                    <span><strong>Security:</strong> NSG firewall rules, SQL Database IP whitelisting, private VNet, and managed identity authentication</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</body>
+</html>

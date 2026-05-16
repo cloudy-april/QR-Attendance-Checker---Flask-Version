@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MaScan - Smart QR Attendance System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    
+    <style>
+        .hero {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 0 20px;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, var(--bg-color), var(--card-bg));
+            color: var(--text-color);
+        }
+        
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 800px;
+            animation: fadeIn 1s ease-out forwards;
+        }
+
+        .hero-logo {
+            width: 120px;
+            height: 120px;
+            margin-bottom: 24px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 16px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem;
+            line-height: 1.6;
+            margin-bottom: 40px;
+            opacity: 0.9;
+        }
+
+        .hero-btn {
+            display: inline-block;
+            padding: 16px 40px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            text-decoration: none;
+            color: #fff;
+            background: var(--primary-color);
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(67, 97, 238, 0.3);
+        }
+
+        .hero-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(67, 97, 238, 0.4);
+            background: var(--primary-hover);
+        }
+
+        .hero-btn i {
+            margin-left: 8px;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Particles */
+        .particle {
+            position: absolute;
+            background: var(--primary-color);
+            border-radius: 50%;
+            opacity: 0.1;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <div class="hero-content">
+            <img src="{{ url_for('static', filename='images/MS_Logo_Blue.ico') }}" alt="MaScan Logo" class="hero-logo">
+            <h1 class="hero-title">MaScan</h1>
+            <p class="hero-subtitle">The professional, reliable, and frictionless QR-based attendance tracking platform designed for the modern cloud.</p>
+            <a href="{{ url_for('auth.login') }}" class="hero-btn">
+                Launch System <i class="fa-solid fa-arrow-right"></i>
+            </a>
+        </div>
+
+        <div class="particle" style="width: 150px; height: 150px; top: 10%; left: 10%;"></div>
+        <div class="particle" style="width: 300px; height: 300px; bottom: -50px; right: -50px;"></div>
+        <div class="particle" style="width: 80px; height: 80px; top: 40%; right: 20%;"></div>
+        <div class="particle" style="width: 200px; height: 200px; bottom: 10%; left: 15%;"></div>
+    </div>
+</body>
+</html>
